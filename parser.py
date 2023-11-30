@@ -111,8 +111,63 @@ class FLParser(Parser):
         else: return []
 
 
+class YouDoParser(Parser):
+    async def parse_data(self, page_html: str | None) -> List[OrderData] | List[None]:
+        if page_html:
+            orders_data: List[OrderData] = []
+            soup = BeautifulSoup(page_html, 'lxml')
+            link = soup.find('meta', {'property': 'og:url'}).get('content')
+            host = 'https://' + urlparse(link).netloc if link else None
+            orders_list: List = soup.find_all(class_=re.compile(r'TasksList_listItem__\w{5}'))
+            orders_list = [item for item in orders_list if len(item.get('class')) == 1] if orders_list else None
+            if not orders_list:
+                logger.warning('Список заказов не найден на странице (возможно изменилась разметка)')
+                return []
+            for order in orders_list:
+
+                order_title = order.find('a', class_=re.compile(r'TasksList_title__\w{5}'))
+                order_title = order_title.text if order_title else None
+
+                order_url: str = order.find('a', class_=re.compile(r'TasksList_title__\w{5}'))
+                order_url = order_url.get('href').split('?')[0] if order_url else None
+                order_url = urljoin(host, order_url)
+
+                try:
+                    order_id = int(order_url.split('/')[-1][1:])
+                except Exception:
+                    logger.warning('Невозможно получить id заказа {order_url}, заказ не будет обработан')
+                    continue
+
+                price = order.find('div', class_=re.compile(r'TasksList_price__\w{5}'))
+                price = price.text if price else None
+
+                def extract_price(input_string):
+                    price_pattern = re.compile(r'\b(\d{1,3}(?:\s?\d{3})*)(?:\s?(?:₽|р|р\.|руб))?\b', re.IGNORECASE)
+                    match = price_pattern.search(input_string)
+                    if match:
+                        price_str = match.group(1).replace(' ', '')
+                        return int(price_str)
+                    else:
+                        return None
+
+                price = extract_price(price)
+
+                tmp_order_data = OrderData(
+                    order_id=order_id,
+                    load_date=None,
+                    url=order_url,
+                    title=order_title,
+                    price=price
+                )
+                orders_data.append(tmp_order_data)
+            return orders_data
+        else:
+            return []
+
+
+
 async def main():
-    from downloader import StaticDownloader
+    from downloader import StaticDownloader, DynamicDownloader
     from models import RequestPageData
 
     page = RequestPageData.from_url('https://freelance.habr.com/tasks')
@@ -130,6 +185,15 @@ async def main():
     res = await parser1.parse_data(page_text1)
     print(res)
     print(len(res))
+
+    page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
+    downloader2 = DynamicDownloader()
+    page_text2 = await downloader2.download_html(page2)
+    parser1 = YouDoParser()
+    res = await parser1.parse_data(page_text2)
+    print(res)
+    print(len(res))
+
 
 
 if __name__ == '__main__':
