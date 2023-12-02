@@ -1,10 +1,10 @@
 import asyncio
 from typing import Coroutine
 
-from downloader import Downloader
-from parser import Parser
-from models import RequestPageData
 from config import SITES_SETTINGS
+from downloader import Downloader
+from models import RequestPageData
+from parser import Parser
 
 
 class Scrapper:
@@ -36,12 +36,7 @@ class Program:
         await self._create_tasks()
         await asyncio.gather(*self.tasks)
 
+
 if __name__ == "__main__":
     program_instance = Program(SITES_SETTINGS)
     asyncio.run(program_instance.run())
-
-
-
-
-
-
