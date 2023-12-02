@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 from abc import ABC, abstractmethod
 from typing import List
 from urllib.parse import urlparse, urljoin
@@ -170,6 +171,8 @@ async def main():
     from downloader import StaticDownloader, DynamicDownloader
     from models import RequestPageData
 
+    start_time = time.time()
+
     page = RequestPageData.from_url('https://freelance.habr.com/tasks')
     downloader = StaticDownloader()
     page_text = await downloader.download_html(page)
@@ -194,6 +197,10 @@ async def main():
     print(res)
     print(len(res))
 
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    print(f"Время выполнения: {execution_time} секунд")
 
 
 if __name__ == '__main__':
