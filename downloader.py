@@ -2,6 +2,7 @@ import asyncio
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
+
 import aiohttp
 from loguru import logger
 from selenium import webdriver
@@ -11,8 +12,8 @@ from models import RequestPageData
 
 class Downloader(ABC):
     @abstractmethod
-    async def download_html(self, page: RequestPageData) -> str | None:
-        pass
+    async def download_html_from_url(self, page: RequestPageData) -> str | None:
+        raise NotImplementedError("Метод должен быть переопределен в подклассе")
 
 
 class StaticDownloader(Downloader):
@@ -46,7 +47,7 @@ class StaticDownloader(Downloader):
                 retry -= 1
                 logger.warning(f'Не удалось загрузить {url}') if retry == 0 else None
 
-    async def download_html(self, page: RequestPageData) -> str | None:
+    async def download_html_from_url(self, page: RequestPageData) -> str | None:
         """Загружает HTML по url и headers из пользовательского объекта RequestPageData"""
         self.session = aiohttp.ClientSession()
         try:
@@ -80,7 +81,7 @@ class DynamicDownloader(Downloader):
         with ThreadPoolExecutor() as pool:
             return await loop.run_in_executor(pool, fetch_sync, retry)  # Передаем retry при вызове
 
-    async def download_html(self, page: RequestPageData) -> str | None:
+    async def download_html_from_url(self, page: RequestPageData) -> str | None:
         """Загружает HTML по url из пользовательского объекта RequestPageData"""
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')

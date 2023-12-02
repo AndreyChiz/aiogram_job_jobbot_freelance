@@ -4,7 +4,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import List
 from urllib.parse import urlparse, urljoin
-from loguru import logger
+from logger import logger
 from bs4 import BeautifulSoup
 
 from models import OrderData
@@ -15,7 +15,7 @@ class Parser(ABC):
     @abstractmethod
     async def parse_data(self, page_html: str | None) -> List[OrderData] | None:
         """Возвращает спсиок новых заказов"""
-        pass
+        raise NotImplementedError("Метод должен быть переопределен в подклассе")
 
 class HabrParser(Parser):
     async def parse_data(self, page_html: str | None) -> List[OrderData] | List[None]:
@@ -178,24 +178,26 @@ async def main():
     page_text = await downloader.download_html(page)
     parser = HabrParser()
     res = await parser.parse_data(page_text)
-    print(res)
-    print(len(res))
+
+    logger.debug(res)
+    logger.debug(len(res))
+
 
     page1 = RequestPageData.from_url('https://www.fl.ru/projects/')
     downloader1 = StaticDownloader()
     page_text1 = await downloader1.download_html(page1)
     parser1 = FLParser()
     res = await parser1.parse_data(page_text1)
-    print(res)
-    print(len(res))
+    logger.debug(res)
+    logger.debug(len(res))
 
     page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
     downloader2 = DynamicDownloader()
     page_text2 = await downloader2.download_html(page2)
     parser1 = YouDoParser()
     res = await parser1.parse_data(page_text2)
-    print(res)
-    print(len(res))
+    logger.debug(res)
+    logger.debug(len(res))
 
     end_time = time.time()
     execution_time = end_time - start_time
