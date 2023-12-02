@@ -1,6 +1,6 @@
 import asyncio
-from abc import ABC
-from asyncio import coroutine
+from typing import Coroutine
+
 from downloader import Downloader
 from parser import Parser
 from models import RequestPageData
@@ -9,7 +9,7 @@ from config import SITES_SETTINGS
 
 class Scrapper:
     def __init__(self, url: str, downloader: Downloader, parser: Parser):
-        self.request_data: RequestPageData.from_url(url)
+        self.request_data: RequestPageData = RequestPageData.from_url(url)
         self.downloader: Downloader = downloader
         self.parser: Parser = parser
 
@@ -18,12 +18,12 @@ class Scrapper:
 
 
 class Program:
-    def __init__(self, sites_settings: dict):
+    def __init__(self, sites_settings: dict = SITES_SETTINGS):
         self.sites_settings: dict = sites_settings
-        self.tasks: list[coroutine] = []
+        self.tasks: list[Coroutine] = []
 
     async def _create_tasks(self):
-        for site, settings in SITES_SETTINGS.items():
+        for site, settings in self.sites_settings.items():
             self.tasks.append(
                 await Scrapper(
                     settings['url'],
