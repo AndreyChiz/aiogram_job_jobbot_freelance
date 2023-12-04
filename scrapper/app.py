@@ -1,7 +1,7 @@
 import asyncio
 from typing import Coroutine
 
-from config import SITES_SETTINGS
+from config import SCRAPPER_SETTINGS
 from downloader import Downloader
 from models import RequestPageData
 from parser import Parser
@@ -18,7 +18,7 @@ class Scrapper:
 
 
 class Program:
-    def __init__(self, sites_settings: dict = SITES_SETTINGS):
+    def __init__(self, sites_settings: dict = SCRAPPER_SETTINGS):
         self.sites_settings: dict = sites_settings
         self.tasks: list[Coroutine] = []
 
@@ -38,5 +38,5 @@ class Program:
 
 
 if __name__ == "__main__":
-    program_instance = Program(SITES_SETTINGS)
+    program_instance = Program(SCRAPPER_SETTINGS)
     asyncio.run(program_instance.run())
