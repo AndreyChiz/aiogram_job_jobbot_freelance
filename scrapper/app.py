@@ -36,12 +36,13 @@ class Program:
                 ).get_new_data()
             )
 
-    async def run(self):
+    async def update_data(self):
         await self._create_tasks()
         result = await asyncio.gather(*self.tasks)
-        print(result)
+
 
 
 if __name__ == "__main__":
-    program_instance = Program(SCRAPPER_SETTINGS)
-    asyncio.run(program_instance.run())
+    program = Program(SCRAPPER_SETTINGS)
+    data = program.update_data
+    asyncio.run(program.update_data())

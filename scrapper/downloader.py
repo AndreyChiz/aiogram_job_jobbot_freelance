@@ -1,4 +1,5 @@
 import asyncio
+import enum
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
@@ -7,10 +8,18 @@ import aiohttp
 from loguru import logger
 from selenium import webdriver
 
+
 from scrapper.models import RequestPageData
 
+DOWNLOAD_RETRY: int = 2
+DOWNLOAD_RETRY_TIMEOUT: int = 5
 
 class Downloader(ABC):
+
+    def __init__(self, retry: int = None, retry_timeout: int = None):
+        self.retry: int = retry if retry else DOWNLOAD_RETRY
+        self.retry_timeout: int = retry_timeout if retry_timeout else DOWNLOAD_RETRY_TIMEOUT
+
     @abstractmethod
     async def download_html(self, page: RequestPageData) -> str | None:
         raise NotImplementedError("Метод должен быть переопределен в подклассе")
@@ -19,10 +28,11 @@ class Downloader(ABC):
 class StaticDownloader(Downloader):
     """Управление загрузкой со server rendered ресурсов"""
 
-    def __init__(self):
+    def __init__(self, retry: int = None, retry_timeout: int = None):
+        super().__init__(retry=retry, retry_timeout=retry_timeout)
         self.session: aiohttp.ClientSession | None = None
 
-    async def _fetch_html(self, url: str, params: str | None = None, retry: int = 2) -> str | None:
+    async def _fetch_html(self, url: str, params: str | None = None) -> str | None:
         """
         Загружает текст страницы
         :param url:
@@ -30,7 +40,7 @@ class StaticDownloader(Downloader):
         :param retry:
         :return:
         """
-        while retry > 0:
+        while self.retry > 0:
             try:
                 async with self.session.get(url, params=params) as response:
                     if response.status != 200:
@@ -42,10 +52,10 @@ class StaticDownloader(Downloader):
                         )
                     return await response.text()
             except Exception as e:
-                logger.warning(f'Невозможно выполнить запрос  {url}: {e}. Осталось попыток: {retry}')
-                await asyncio.sleep(3)
-                retry -= 1
-                logger.warning(f'Не удалось загрузить {url}') if retry == 0 else None
+                logger.warning(f'Невозможно выполнить запрос  {url}: {e}. Осталось попыток: {self.retry}')
+                await asyncio.sleep(self.retry_timeout)
+                self.retry -= 1
+                logger.warning(f'Не удалось загрузить {url}') if self.retry == 0 else None
 
     async def download_html(self, page: RequestPageData) -> str | None:
         """Загружает HTML по url и headers из пользовательского объекта RequestPageData"""
@@ -60,26 +70,28 @@ class StaticDownloader(Downloader):
 class DynamicDownloader(Downloader):
     """Управление загрузкой с client rendered ресурсов"""
 
-    def __init__(self):
+    def __init__(self, retry: int = None, retry_timeout: int = None):
+        super().__init__(retry=retry, retry_timeout=retry_timeout)
         self.driver: webdriver = None
 
-    async def _fetch_html(self, url: str, retry: int = 3) -> str | None:
+    async def _fetch_html(self, url: str) -> str | None:
         """Загружает текст страницы"""
         loop = asyncio.get_event_loop()
 
-        def fetch_sync(retry: int):  # Передаем retry как аргумент
-            while retry > 0:
+        def fetch_sync():
+            while self.retry > 0:
                 try:
                     self.driver.get(url)
                     time.sleep(5)
                     res = self.driver.page_source
                     return res
                 except Exception as e:
-                    logger.warning(f'Невозможно выполнить запрос  {url}: {e}. Осталось попыток: {retry}')
-                    retry -= 1
+                    logger.warning(f'Невозможно выполнить запрос  {url}: {e}. Осталось попыток: {self.retry}')
+                    time.sleep(self.retry_timeout)
+                    self.retry -= 1
 
         with ThreadPoolExecutor() as pool:
-            return await loop.run_in_executor(pool, fetch_sync, retry)  # Передаем retry при вызове
+            return await loop.run_in_executor(pool, fetch_sync )
 
     async def download_html(self, page: RequestPageData) -> str | None:
         """Загружает HTML по url из пользовательского объекта RequestPageData"""

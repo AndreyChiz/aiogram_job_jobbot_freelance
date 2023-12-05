@@ -1,3 +1,5 @@
+import enum
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from scrapper.downloader import DynamicDownloader, StaticDownloader
 from scrapper.parser import HabrParser, FLParser, YouDoParser
@@ -13,6 +15,9 @@ SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/t
                                 'downloader': DynamicDownloader,
                                 'parser': YouDoParser}
                      }
+
+
+
 
 class DBSettings(BaseSettings):
     DB_HOST: str
