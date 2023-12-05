@@ -106,10 +106,10 @@ class DynamicDownloader(Downloader):
 #     dynamic_page = RequestPageData.from_url("https://youdo.com/tasks-all-opened-all")
 #
 #     static_downloader = StaticDownloader()
-#     static_page_html = await static_downloader.download_html_from_url(page)
+#     static_page_html = await static_downloader.download_html(page)
 #
 #     dynamic_downloader = DynamicDownloader()
-#     dynamic_page_html = await dynamic_downloader.download_html_from_url(dynamic_page)
+#     dynamic_page_html = await dynamic_downloader.download_html(dynamic_page)
 #     print(dynamic_page_html)
 #
 #     elapsed_time = time.time() - start_time

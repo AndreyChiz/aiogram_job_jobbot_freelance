@@ -173,31 +173,32 @@ async def main():
 
     start_time = time.time()
 
-    page = RequestPageData.from_url('https://freelance.habr.com/tasks')
-    downloader = StaticDownloader()
-    page_text = await downloader.download_html(page)
-    parser = HabrParser()
-    res = await parser.parse_data(page_text)
-
-    logger.debug(res)
-    logger.debug(len(res))
+    # page = RequestPageData.from_url('https://freelance.habr.com/tasks')
+    # downloader = StaticDownloader()
+    # page_text = await downloader.download_html(page)
+    # parser = HabrParser()
+    # res = await parser.parse_data(page_text)
+    #
+    # logger.debug(res)
+    # logger.debug(len(res))
 
 
     page1 = RequestPageData.from_url('https://www.fl.ru/projects/')
-    downloader1 = StaticDownloader()
+    downloader1 = DynamicDownloader()
     page_text1 = await downloader1.download_html(page1)
+    print(page_text1)
     parser1 = FLParser()
     res = await parser1.parse_data(page_text1)
     logger.debug(res)
     logger.debug(len(res))
 
-    page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
-    downloader2 = DynamicDownloader()
-    page_text2 = await downloader2.download_html(page2)
-    parser1 = YouDoParser()
-    res = await parser1.parse_data(page_text2)
-    logger.debug(res)
-    logger.debug(len(res))
+    # page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
+    # downloader2 = DynamicDownloader()
+    # page_text2 = await downloader2.download_html(page2)
+    # parser1 = YouDoParser()
+    # res = await parser1.parse_data(page_text2)
+    # logger.debug(res)
+    # logger.debug(len(res))
 
     end_time = time.time()
     execution_time = end_time - start_time

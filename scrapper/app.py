@@ -10,11 +10,15 @@ from parser import Parser
 class Scrapper:
     def __init__(self, url: str, downloader: Downloader, parser: Parser):
         self.request_data: RequestPageData = RequestPageData.from_url(url)
-        self.downloader: Downloader = downloader
-        self.parser: Parser = parser
+        self.downloader: Downloader = downloader()
+        self.parser: Parser = parser()
+        print(self.request_data)
 
     async def get_new_data(self):
-        raise NotImplementedError("Метод должен быть переопределен в подклассе")
+        page_text = await self.downloader.download_html(self.request_data)
+        result = await self.parser.parse_data(page_text)
+        return result
+        # raise NotImplementedError("Метод должен быть переопределен в подклассе")
 
 
 class Program:
@@ -25,7 +29,7 @@ class Program:
     async def _create_tasks(self):
         for site, settings in self.sites_settings.items():
             self.tasks.append(
-                await Scrapper(
+                Scrapper(
                     settings['url'],
                     settings['downloader'],
                     settings['parser']
@@ -34,7 +38,8 @@ class Program:
 
     async def run(self):
         await self._create_tasks()
-        await asyncio.gather(*self.tasks)
+        result = await asyncio.gather(*self.tasks)
+        print(result)
 
 
 if __name__ == "__main__":

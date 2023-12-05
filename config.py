@@ -6,7 +6,7 @@ from scrapper.parser import HabrParser, FLParser, YouDoParser
 SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/tasks',
                                          'downloader': StaticDownloader,
                                          'parser': HabrParser},
-                  'www.fl.ru': {'url': 'ttps://www.fl.ru/projects/',
+                  'www.fl.ru': {'url': 'https://www.fl.ru/projects/',
                                 'downloader': StaticDownloader,
                                 'parser': FLParser},
                   'youdo.com': {'url': 'https://youdo.com/tasks-all-opened-all',
