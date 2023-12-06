@@ -39,10 +39,11 @@ class Program:
     async def update_data(self):
         await self._create_tasks()
         result = await asyncio.gather(*self.tasks)
+        print(result)
 
 
 
 if __name__ == "__main__":
     program = Program(SCRAPPER_SETTINGS)
-    data = program.update_data
+
     asyncio.run(program.update_data())
