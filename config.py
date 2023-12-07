@@ -1,22 +1,4 @@
-import enum
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from scrapper.downloader import DynamicDownloader, StaticDownloader
-from scrapper.parser import HabrParser, FLParser, YouDoParser
-
-
-SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/tasks',
-                                         'downloader': StaticDownloader,
-                                         'parser': HabrParser},
-                  'www.fl.ru': {'url': 'https://www.fl.ru/projects/',
-                                'downloader': StaticDownloader,
-                                'parser': FLParser},
-                  'youdo.com': {'url': 'https://youdo.com/tasks-all-opened-all',
-                                'downloader': DynamicDownloader,
-                                'parser': YouDoParser}
-                     }
-
-
 
 
 class DBSettings(BaseSettings):
@@ -27,7 +9,11 @@ class DBSettings(BaseSettings):
     DB_NAME: str
 
     @property
-    def DATABASE_URL_asyncpg(self):
+    def database_url_asyncpg(self) -> str:
         # postgresql+psyc
-        return f'postgresql+asyncpg:// postgres:postgres'
+        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
 
+    model_config = SettingsConfigDict(env_file='.env')
+
+
+dbsettings = DBSettings()

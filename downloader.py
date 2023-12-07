@@ -1,5 +1,4 @@
 import asyncio
-import enum
 import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
@@ -8,8 +7,7 @@ import aiohttp
 from loguru import logger
 from selenium import webdriver
 
-
-from scrapper.models import RequestPageData
+from models import RequestPageData
 
 DOWNLOAD_RETRY: int = 2
 DOWNLOAD_RETRY_TIMEOUT: int = 5

@@ -4,32 +4,56 @@ import time
 from abc import ABC, abstractmethod
 from typing import List
 from urllib.parse import urlparse, urljoin
-from logger import logger
+
 from bs4 import BeautifulSoup
 
-from models import OrderData
+from logger import logger
+from models import BaseOrderData, HabrOrderData, FlOrderData, YoudoOrderData
 
 
 class Parser(ABC):
 
+    def __init__(self, ):
+        self.order_data_obj_type = BaseOrderData
+
+    async def _create_order_data_obj(
+            self,
+            order_id: int,
+            load_date: str | None,
+            order_url: str,
+            order_title: str,
+            price: int):
+        tmp_order_data = self.order_data_obj_type(
+            order_id=order_id,
+            load_date=load_date,
+            url=order_url,
+            title=order_title,
+            price=price
+        )
+        return tmp_order_data
+
     @abstractmethod
-    async def parse_data(self, page_html: str | None) -> List[OrderData] | None:
+    async def parse_data(self, page_html: str | None) -> List[BaseOrderData] | None:
         """Возвращает спсиок новых заказов"""
         raise NotImplementedError("Метод должен быть переопределен в подклассе")
 
+
 class HabrParser(Parser):
-    async def parse_data(self, page_html: str | None) -> List[OrderData] | List[None]:
+    def __init__(self, ):
+        self.order_data_obj_type = HabrOrderData
+
+    async def parse_data(self, page_html: str | None) -> List[HabrOrderData] | List[None]:
         if page_html:
-            orders_data : List[OrderData] = []
+            orders_data: List[HabrOrderData] = []
             soup = BeautifulSoup(page_html, 'lxml')
             link = soup.find('link').get('href')
             host = 'https://' + urlparse(link).netloc if link else None
-            orders_list : List = soup.find_all('li', 'content-list__item')
+            orders_list: List = soup.find_all('li', 'content-list__item')
             if not orders_list:
                 logger.warning('Список заказов не найден на странице (возможно изменилась разметка)')
                 return []
             for order in orders_list:
-                order_title_wrap = order.find('div','task__title')
+                order_title_wrap = order.find('div', 'task__title')
                 order_url: str = order_title_wrap.find('a').get('href') if order_title_wrap else None
                 order_url = urljoin(host, order_url)
                 try:
@@ -43,21 +67,27 @@ class HabrParser(Parser):
                 price = order.find('span', 'count')
                 price = int(''.join(filter(str.isdigit, price.text.strip()))) if price else None
 
-                tmp_order_data = OrderData(
+                tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
                     load_date=None,
-                    url=order_url,
-                    title=order_title,
+                    order_url=order_url,
+                    order_title=order_title,
                     price=price
                 )
+
                 orders_data.append(tmp_order_data)
             return orders_data
-        else: return []
+        else:
+            return []
+
 
 class FLParser(Parser):
-    async def parse_data(self, page_html: str | None) -> List[OrderData] | List[None]:
+    def __init__(self, ):
+        self.order_data_obj_type = FlOrderData
+
+    async def parse_data(self, page_html: str | None) -> List[FlOrderData] | List[None]:
         if page_html:
-            orders_data : List[OrderData] = []
+            orders_data: List[FlOrderData] = []
             soup = BeautifulSoup(page_html, 'lxml')
             link = soup.find('link').get('href')
 
@@ -65,12 +95,11 @@ class FLParser(Parser):
             pattern = re.compile(r'^project-item\d+$')
             orders_list: List = soup.find_all(id=pattern)
 
-
             if not orders_list:
                 logger.warning('Список заказов не найден на странице (возможно изменилась разметка)')
                 return []
             for order in orders_list:
-                order_title_wrap = order.find('div','b-post__grid')
+                order_title_wrap = order.find('div', 'b-post__grid')
                 order_url: str = order_title_wrap.find('a').get('href') if order_title_wrap else None
                 order_url = urljoin(host, order_url)
                 try:
@@ -98,24 +127,29 @@ class FLParser(Parser):
                     if match:
                         return int(match.group(1))
                     return None
+
                 price = extract_number(match)
 
-                tmp_order_data = OrderData(
+                tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
                     load_date=None,
-                    url=order_url,
-                    title=order_title,
+                    order_url=order_url,
+                    order_title=order_title,
                     price=price
                 )
                 orders_data.append(tmp_order_data)
             return orders_data
-        else: return []
+        else:
+            return []
 
 
 class YouDoParser(Parser):
-    async def parse_data(self, page_html: str | None) -> List[OrderData] | List[None]:
+    def __init__(self, ):
+        self.order_data_obj_type = YoudoOrderData
+
+    async def parse_data(self, page_html: str | None) -> List[YoudoOrderData] | List[None]:
         if page_html:
-            orders_data: List[OrderData] = []
+            orders_data: List[YoudoOrderData] = []
             soup = BeautifulSoup(page_html, 'lxml')
             link = soup.find('meta', {'property': 'og:url'}).get('content')
             host = 'https://' + urlparse(link).netloc if link else None
@@ -153,11 +187,11 @@ class YouDoParser(Parser):
 
                 price = extract_price(price)
 
-                tmp_order_data = OrderData(
+                tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
                     load_date=None,
-                    url=order_url,
-                    title=order_title,
+                    order_url=order_url,
+                    order_title=order_title,
                     price=price
                 )
                 orders_data.append(tmp_order_data)
@@ -166,39 +200,37 @@ class YouDoParser(Parser):
             return []
 
 
-
 async def main():
     from downloader import StaticDownloader, DynamicDownloader
     from models import RequestPageData
 
     start_time = time.time()
 
-    # page = RequestPageData.from_url('https://freelance.habr.com/tasks')
-    # downloader = StaticDownloader()
-    # page_text = await downloader.download_html(page)
-    # parser = HabrParser()
-    # res = await parser.parse_data(page_text)
-    #
-    # logger.debug(res)
-    # logger.debug(len(res))
+    page = RequestPageData.from_url('https://freelance.habr.com/tasks')
+    downloader = StaticDownloader()
+    page_text = await downloader.download_html(page)
+    parser = HabrParser()
+    res = await parser.parse_data(page_text)
 
+    logger.debug(res)
+    logger.debug(len(res))
 
     page1 = RequestPageData.from_url('https://www.fl.ru/projects/')
     downloader1 = DynamicDownloader()
     page_text1 = await downloader1.download_html(page1)
-    print(page_text1)
+
     parser1 = FLParser()
     res = await parser1.parse_data(page_text1)
     logger.debug(res)
     logger.debug(len(res))
 
-    # page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
-    # downloader2 = DynamicDownloader()
-    # page_text2 = await downloader2.download_html(page2)
-    # parser1 = YouDoParser()
-    # res = await parser1.parse_data(page_text2)
-    # logger.debug(res)
-    # logger.debug(len(res))
+    page2 = RequestPageData.from_url('https://youdo.com/tasks-all-opened-all')
+    downloader2 = DynamicDownloader()
+    page_text2 = await downloader2.download_html(page2)
+    parser1 = YouDoParser()
+    res = await parser1.parse_data(page_text2)
+    logger.debug(res)
+    logger.debug(len(res))
 
     end_time = time.time()
     execution_time = end_time - start_time
@@ -208,12 +240,6 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-
-
-
-
-
 
 #
 # async def main():
