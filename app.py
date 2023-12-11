@@ -23,6 +23,7 @@ SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/t
 
 class Scrapper:
     def __init__(self, url: str, downloader: Downloader, parser: Parser):
+
         self.request_data: RequestPageData = RequestPageData.from_url(url)
         self.downloader: Downloader = downloader()
         self.parser: Parser = parser()
@@ -58,11 +59,8 @@ class Program:
         await self.db.create_tables()
 
         for item in result:
-            print(item)
             await self.db.insert_data(item)
-        print(len(result))
-
-        return (result)
+        return result
 
 
 if __name__ == "__main__":

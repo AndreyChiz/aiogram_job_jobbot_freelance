@@ -1,10 +1,10 @@
 import asyncio
 
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from config import dbsettings
-from models import UsersOrm, Base
-
+from models import Base
 
 
 class Database:
@@ -21,9 +21,12 @@ class Database:
 
     async def insert_data(self, data: list):
         async with self.session_factory() as session:
-            # user = UsersOrm(user_id=123, user_name='Феликс', user_keywords='бот, aiogram, доделать', user_notify=True)
-            # user1 = UsersOrm(user_id=345, user_name='Халк', user_keywords='django, api', user_notify=False)
-            session.add_all(data)
+            for item in data:
+                item_data = {key: getattr(item, key) for key in item.__dict__ if not key.startswith('_')}
+                stmt = insert(item.__table__)\
+                    .values(item_data)\
+                    .on_conflict_do_nothing(index_elements=['order_id'])
+                await session.execute(stmt)
             await session.commit()
 
 
