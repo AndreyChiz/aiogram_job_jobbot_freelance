@@ -3,7 +3,7 @@ import asyncio
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-from config import dbsettings
+from config import Settings
 from models import Base
 
 
@@ -11,7 +11,7 @@ class Database:
 
     def __init__(self, ):
         self.engine = create_async_engine(
-            dbsettings.database_url_asyncpg
+            Settings().database_url_asyncpg
         )
         self.session_factory = async_sessionmaker(self.engine)
 

@@ -1,12 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DBSettings(BaseSettings):
+class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+
+    BOT_TOKEN: str
 
     @property
     def database_url_asyncpg(self) -> str:
@@ -16,4 +18,3 @@ class DBSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env')
 
 
-dbsettings = DBSettings()
