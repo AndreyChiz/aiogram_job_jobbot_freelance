@@ -48,7 +48,7 @@ class Scrapper:
 
 class Program:
     """The main program class"""
-    def __init__(self, sites_settings=None):
+    def __init__(self, sites_settings=None, update_timeout: int = 5):
         """
         :param sites_settings: settings for the program
         :type sites_settings: dict
@@ -58,9 +58,11 @@ class Program:
             sites_settings = SCRAPPER_SETTINGS
         self.sites_settings: dict = sites_settings
         self.tasks: list[Coroutine] = []
+        self.update_timeout = update_timeout
 
         self.db = Database()
         self.tg_bot = TGBot()
+
 
     async def _create_tasks(self):
         """
@@ -79,7 +81,7 @@ class Program:
                 ).get_data()
             )
 
-    async def _update_data(self, update_timeout: int = 1):
+    async def _update_data(self):
         """
         Updates the data from all sites in the database extend new orders in self.data_from_update
 
@@ -94,7 +96,7 @@ class Program:
                 self.data_from_update.extend(await self.db.insert_data(item))  # TODO: Вынести в search_engine
 
             result.clear()
-            await asyncio.sleep(update_timeout * 60)
+            await asyncio.sleep(self.update_timeout * 60)
             print(*[f"{i.order_id}, {i.title}, {i.url}, {i.price}" for i in self.data_from_update], sep="\n")
 
 
@@ -109,7 +111,7 @@ class Program:
 
 if __name__ == "__main__":
     start_time = time.time()
-    program = Program(SCRAPPER_SETTINGS)
+    program = Program(SCRAPPER_SETTINGS, update_timeout=1)
 
     asyncio.run(program.start())
     end_time = time.time()

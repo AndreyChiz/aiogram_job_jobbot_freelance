@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 from urllib.parse import urljoin, urlparse
 
-from sqlalchemy import Column, Integer, String, DateTime, MetaData, DDL
+from sqlalchemy import Column, Integer,Boolean , String, DateTime, MetaData, DDL
+from sqlalchemy.types import ARRAY
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,10 +18,10 @@ on_conflict_ddl = DDL("ON CONFLICT (order_id) DO NOTHING")
 
 class UsersOrm(Base):
     __tablename__ = 'users'
-    user_id: Mapped[int] = mapped_column(primary_key=True)
-    user_name: Mapped[str]
-    user_keywords: Mapped[str]
-    user_notify: Mapped[bool]
+    user_id = Column(Integer, primary_key=True)
+    user_name = Column(String, nullable=True)
+    user_keywords = Column(ARRAY(String), nullable=True)
+    user_notify = Column(Boolean, default=True)
 
 
 

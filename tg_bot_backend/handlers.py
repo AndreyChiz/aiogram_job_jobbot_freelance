@@ -10,6 +10,8 @@ from aiogram.utils.markdown import hbold
 from tg_bot_backend.keyboards import control_panel
 from tg_bot_backend.lexicon import lexicon_ru_txt
 
+from database import Database
+
 router = Router(name=__name__)
 
 
@@ -67,34 +69,38 @@ class KeyWords(StatesGroup):
     """
     keywords = State()
 
-#
-# @router.callback_query()
-# async def callback_query_handler(callback_query: CallbackQuery, bot: Bot, state: FSMContext):
-#     """
-#     Обработчки нажатий кнопок control_panel
-#     """
-#     if callback_query.data == 'enter_keywords':
-#         await state.set_state(KeyWords.keywords)
-#         await bot.send_message(callback_query.from_user.id, "Введите ключевые слова:")  # TODO: поместить в lexicon
-#
-#     elif callback_query.data == 'start_notyfy':
-#         await db_write_is_notified(callback_query.from_user.id, 1, )
-#         await bot.send_message(callback_query.from_user.id,
-#                                "Отправка  уведомлений активирована")  # TODO: поместить в lexicon
-#
-#     elif callback_query.data == 'stop_notyfy':
-#         await db_write_is_notified(callback_query.from_user.id, 0)
-#         await bot.send_message(callback_query.from_user.id,
-#                                "Отправка уведомлений приостановлена")  # TODO: поместить в lexicon
-#
-#
-# @router.message(KeyWords.keywords)
-# async def get_keywords(message: Message, state: FSMContext):
-#     """
-#     Принимает от пользователя ключевые слова и пишет их в базу данных
-#     """
-#     data = await state.update_data(keywords=message.text)
-#     await db_write_key_words(user_id=message.from_user.id, keywords=data['keywords'])
-#     await message.answer(f'Ключевые слова | {" | ".join(data["keywords"].split(","))} | успешно добавлены',
-#                          reply_markup=control_panel)  # TODO: поместить в lexicon
-#     await state.clear()
+
+@router.callback_query()
+async def callback_query_handler(callback_query: CallbackQuery, bot: Bot, state: FSMContext):
+    """
+    Обработчки нажатий кнопок control_panel
+    """
+    if callback_query.data == 'enter_keywords':
+        await state.set_state(KeyWords.keywords)
+        await bot.send_message(callback_query.from_user.id, "Введите ключевые слова:")  # TODO: поместить в lexicon
+
+    elif callback_query.data == 'start_notyfy':
+        await Database().insert_is_notified(user_id=callback_query.from_user.id,
+                                            user_notify=1)
+        await bot.send_message(callback_query.from_user.id,
+                               "Отправка  уведомлений активирована")  # TODO: поместить в lexicon
+
+    elif callback_query.data == 'stop_notyfy':
+        await Database().insert_is_notified(user_id=callback_query.from_user.id,
+                                            user_notify=0)
+        await bot.send_message(callback_query.from_user.id,
+                               "Отправка уведомлений приостановлена")  # TODO: поместить в lexicon
+
+
+@router.message(KeyWords.keywords)
+async def get_keywords(message: Message, state: FSMContext):
+    """
+    Принимает от пользователя ключевые слова и пишет их в базу данных
+    """
+    data = await state.update_data(keywords=message.text)
+    await Database().insert_key_words(user_id=message.from_user.id,
+                                      user_name=message.from_user.username,
+                                      user_keywords=data['keywords'])
+    await message.answer(f'Ключевые слова | {" | ".join(data["keywords"].split(","))} | успешно добавлены',
+                         reply_markup=control_panel)  # TODO: поместить в lexicon
+    await state.clear()
