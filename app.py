@@ -106,6 +106,13 @@ class Program:
                 self.new_data_from_update,
                 users_request_data)
 
+            logger.debug('результат')
+            logger.debug(notifications)
+            logger.debug('список апдейтов')
+            logger.debug(self.new_data_from_update)
+
+
+
 
 
 
