@@ -1,6 +1,7 @@
 import asyncio
 import time
 from typing import Coroutine
+from logger import logger
 
 from database import Database
 from downloader import Downloader
@@ -9,6 +10,7 @@ from models import RequestPageData
 from parser import HabrParser, FLParser, YouDoParser
 from parser import Parser
 from tg_bot import TGBot
+from search_engine import SearchEngine
 
 SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/tasks',
                                             'downloader': StaticDownloader,
@@ -24,6 +26,7 @@ SCRAPPER_SETTINGS = {'freelance.habr.com': {'url': 'https://freelance.habr.com/t
 
 class Scrapper:
     """The class which getting data from one site"""
+
     def __init__(self, url: str, downloader: Downloader, parser: Parser):
         """
         :param url: The url to scrape
@@ -34,7 +37,7 @@ class Scrapper:
         self.downloader: Downloader = downloader()
         self.parser: Parser = parser()
 
-        print(self.request_data)
+        logger.debug(self.request_data)
 
     async def get_data(self):
         """
@@ -45,15 +48,15 @@ class Scrapper:
         return result
 
 
-
 class Program:
     """The main program class"""
+
     def __init__(self, sites_settings=None, update_timeout: int = 5):
         """
         :param sites_settings: settings for the program
         :type sites_settings: dict
         """
-        self.data_from_update: list = []
+        self.new_data_from_update: list = []
         if sites_settings is None:
             sites_settings = SCRAPPER_SETTINGS
         self.sites_settings: dict = sites_settings
@@ -62,7 +65,7 @@ class Program:
 
         self.db = Database()
         self.tg_bot = TGBot()
-
+        self.search_engine = SearchEngine()
 
     async def _create_tasks(self):
         """
@@ -93,11 +96,17 @@ class Program:
             result = await asyncio.gather(*self.tasks)
             await self.db.create_tables()
             for item in result:
-                self.data_from_update.extend(await self.db.insert_data(item))  # TODO: Вынести в search_engine
-
+                self.new_data_from_update.extend(await self.db.insert_data(item))
             result.clear()
             await asyncio.sleep(self.update_timeout * 60)
-            print(*[f"{i.order_id}, {i.title}, {i.url}, {i.price}" for i in self.data_from_update], sep="\n")
+
+            users_request_data = await self.db.get_user_data()
+
+            notifications = await self.search_engine.create_notifications(
+                self.new_data_from_update,
+                users_request_data)
+
+
 
 
     async def start(self):
@@ -106,7 +115,6 @@ class Program:
         bot_task = asyncio.create_task(self.tg_bot.start())
         scrasppers_task = asyncio.create_task(self._update_data())
         await asyncio.gather(bot_task, scrasppers_task)
-
 
 
 if __name__ == "__main__":

@@ -19,13 +19,13 @@ class Parser(ABC):
     async def _create_order_data_obj(
             self,
             order_id: int,
-            load_date: str | None,
+            # load_date: str | None,
             order_url: str,
             order_title: str,
             price: int):
         tmp_order_data = self.order_data_obj_type(
             order_id=order_id,
-            load_date=load_date,
+            # load_date=load_date,
             url=order_url,
             title=order_title,
             price=price
@@ -69,7 +69,7 @@ class HabrParser(Parser):
 
                 tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
-                    load_date=None,
+                    # load_date=None,
                     order_url=order_url,
                     order_title=order_title,
                     price=price
@@ -132,7 +132,7 @@ class FLParser(Parser):
 
                 tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
-                    load_date=None,
+                    # load_date=None,
                     order_url=order_url,
                     order_title=order_title,
                     price=price
@@ -189,7 +189,7 @@ class YouDoParser(Parser):
 
                 tmp_order_data = await self._create_order_data_obj(
                     order_id=order_id,
-                    load_date=None,
+                    # load_date=None,
                     order_url=order_url,
                     order_title=order_title,
                     price=price

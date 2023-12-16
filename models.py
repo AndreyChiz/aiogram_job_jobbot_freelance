@@ -1,8 +1,9 @@
+import datetime
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Annotated
 from urllib.parse import urljoin, urlparse
 
-from sqlalchemy import Column, Integer,Boolean , String, DateTime, MetaData, DDL
+from sqlalchemy import Column, BigInteger,Boolean , String, DateTime, MetaData, DDL, text
 from sqlalchemy.types import ARRAY
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped, mapped_column
@@ -14,14 +15,20 @@ class Base(DeclarativeBase):
 
 
 metadata = MetaData()
-on_conflict_ddl = DDL("ON CONFLICT (order_id) DO NOTHING")
+# on_conflict_ddl = DDL("ON CONFLICT (order_id) DO NOTHING")
+created_at = Annotated[datetime.datetime, mapped_column(server_default=(text("TIMEZONE('utc', now())")))]
+bigInt = Annotated[int, mapped_column(BigInteger, primary_key=True)]
+u_list = Annotated[list, mapped_column(ARRAY(String),
+                                       # nullable=True,
+                                       default=[])]
 
 class UsersOrm(Base):
     __tablename__ = 'users'
-    user_id = Column(Integer, primary_key=True)
-    user_name = Column(String, nullable=True)
-    user_keywords = Column(ARRAY(String), nullable=True)
-    user_notify = Column(Boolean, default=True)
+    user_id: Mapped[bigInt]
+    user_name: Mapped[str | None]
+    user_keywords: Mapped[u_list]
+    user_notify: Mapped[bool] = True
+    user_reg_data: Mapped[created_at]
 
 
 
@@ -29,11 +36,11 @@ class BaseOrderData(Base):
     __tablename__ = 'base_order'
     __abstract__ = True
 
-    order_id = Column(Integer, primary_key=True)
-    load_date = Column(DateTime)
-    url = Column(String)
-    title = Column(String)
-    price = Column(Integer, nullable=True)
+    order_id: Mapped[bigInt]
+    load_date: Mapped[created_at]
+    url: Mapped[str]
+    title: Mapped[str | None]
+    price: Mapped[int | None]
 
 
 class HabrOrderData(BaseOrderData):

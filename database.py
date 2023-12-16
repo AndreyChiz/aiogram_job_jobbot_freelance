@@ -1,10 +1,11 @@
 import asyncio
-from sqlalchemy import text
+
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from config import Settings
-from models import Base, BaseOrderData, UsersOrm
+from models import Base, UsersOrm
 
 
 class Database:
@@ -23,7 +24,6 @@ class Database:
     async def create_tables(self):
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-
 
     # async def insert_data(self, data: list):
     #     async with self.session_factory() as session:
@@ -52,26 +52,48 @@ class Database:
 
     # TODO: ОБЪЕДИНИТЬ
 
-    async def insert_is_notified(self, user_id, user_notify=1):
-        user = UsersOrm(user_id=user_id, user_notify=user_notify)
+    # async def insert_is_notified(self, user_id, user_notify=1):
+    #     user = UsersOrm(user_id=user_id, user_notify=user_notify)
+    #     print(user.user_id, user.user_name, user.user_keywords, user.user_notify)
+    #     async with self.session_factory() as session:
+    #         await session.merge(user)
+    #         await session.commit()
+
+    async def insert_user_data(self, user_id,
+                               user_name=None,
+                               user_keywords=[],
+                               user_notify=1):
+        user_keywords = list(set(user_keywords.split(','))) if user_keywords else []
+        if any([user_name, user_keywords]):
+            user = UsersOrm(user_id=user_id,
+                            user_name=user_name,
+                            user_keywords=user_keywords,
+                            user_notify=user_notify)
+        else:
+            user = UsersOrm(user_id=user_id,
+                            user_notify=user_notify)
         print(user.user_id, user.user_name, user.user_keywords, user.user_notify)
         async with self.session_factory() as session:
             await session.merge(user)
             await session.commit()
 
-
-    async  def insert_key_words(self, user_id, user_name, user_keywords):
-        user_keywords = user_keywords.split(',') if user_keywords else []
-        user = UsersOrm(user_id=user_id, user_name=user_name, user_keywords=user_keywords)
-        print(user.user_id, user.user_name, user.user_keywords, user.user_notify)
+    async def get_user_data(self)-> list:
         async with self.session_factory() as session:
-            await session.merge(user)
-            await session.commit()
+            resault = await session.execute(select(UsersOrm.user_id, UsersOrm.user_keywords).
+                                      where(UsersOrm.user_notify == True))
+            resault = [item._asdict() for item in resault.all()]
 
-async def check():
+
+        return resault
+
+
+
+
+
+def check():
+
     db = Database()
-    await db.create_tables()
-
+    db.create_tables()
 
 
 if __name__ == '__main__':
