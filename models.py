@@ -27,7 +27,7 @@ class UsersOrm(Base):
     user_id: Mapped[bigInt]
     user_name: Mapped[str | None]
     user_keywords: Mapped[u_list]
-    user_notify: Mapped[bool] = True
+    user_notify: Mapped[bool] = mapped_column(Boolean, default=True)
     user_reg_data: Mapped[created_at]
 
 

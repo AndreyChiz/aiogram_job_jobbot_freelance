@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     BOT_TOKEN: str
 
+
+
+
     @property
     def database_url_asyncpg(self) -> str:
         # postgresql+psyc

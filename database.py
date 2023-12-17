@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from config import Settings
 from models import Base, UsersOrm
+from logger import logger
 
 
 class Database:
@@ -25,17 +26,11 @@ class Database:
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    # async def insert_data(self, data: list):
-    #     async with self.session_factory() as session:
-    #         for item in data:
-    #             item_data = {key: getattr(item, key) for key in item.__dict__ if not key.startswith('_')}
-    #             stmt = insert(item.__table__)\
-    #                 .values(item_data)\
-    #                 .on_conflict_do_nothing(index_elements=['order_id'])
-    #             await session.execute(stmt)
-    #         await session.commit()
 
-    async def insert_data(self, data: list):
+    async def insert_data(self, data: list) -> list:
+        """
+        Insert only new orders data and return that
+        """
         inserted_rows = []
         async with self.session_factory() as session:
             for item in data:
@@ -50,14 +45,6 @@ class Database:
 
         return inserted_rows
 
-    # TODO: ОБЪЕДИНИТЬ
-
-    # async def insert_is_notified(self, user_id, user_notify=1):
-    #     user = UsersOrm(user_id=user_id, user_notify=user_notify)
-    #     print(user.user_id, user.user_name, user.user_keywords, user.user_notify)
-    #     async with self.session_factory() as session:
-    #         await session.merge(user)
-    #         await session.commit()
 
     async def insert_user_data(self, user_id,
                                user_name=None,
@@ -72,7 +59,7 @@ class Database:
         else:
             user = UsersOrm(user_id=user_id,
                             user_notify=user_notify)
-        print(user.user_id, user.user_name, user.user_keywords, user.user_notify)
+        logger.debug(user.user_id, user.user_name, user.user_keywords, user.user_notify)
         async with self.session_factory() as session:
             await session.merge(user)
             await session.commit()

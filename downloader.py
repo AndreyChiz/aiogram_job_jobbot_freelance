@@ -24,7 +24,7 @@ class Downloader(ABC):
 
 
 class StaticDownloader(Downloader):
-    """Управление загрузкой со server rendered ресурсов"""
+    """Managing the loading of rendered resources from the server"""
 
     def __init__(self, retry: int = None, retry_timeout: int = None):
         super().__init__(retry=retry, retry_timeout=retry_timeout)
@@ -32,11 +32,7 @@ class StaticDownloader(Downloader):
 
     async def _fetch_html(self, url: str, params: str | None = None) -> str | None:
         """
-        Загружает текст страницы
-        :param url:
-        :param params:
-        :param retry:
-        :return:
+        Loads page text
         """
         while self.retry > 0:
             try:
@@ -56,7 +52,7 @@ class StaticDownloader(Downloader):
                 logger.warning(f'Не удалось загрузить {url}') if self.retry == 0 else None
 
     async def download_html(self, page: RequestPageData) -> str | None:
-        """Загружает HTML по url и headers из пользовательского объекта RequestPageData"""
+        """Loads HTML by url and headers from a custom RequestPageData object"""
         self.session = aiohttp.ClientSession()
         try:
             page_html = await self._fetch_html(page.url, params=page.request_params)
@@ -66,14 +62,14 @@ class StaticDownloader(Downloader):
 
 
 class DynamicDownloader(Downloader):
-    """Управление загрузкой с client rendered ресурсов"""
+    """Managing loading from client rendered resources"""
 
     def __init__(self, retry: int = None, retry_timeout: int = None):
         super().__init__(retry=retry, retry_timeout=retry_timeout)
         self.driver: webdriver = None
 
     async def _fetch_html(self, url: str) -> str | None:
-        """Загружает текст страницы"""
+        """Loads page text"""
         loop = asyncio.get_event_loop()
 
         def fetch_sync():
@@ -92,7 +88,7 @@ class DynamicDownloader(Downloader):
             return await loop.run_in_executor(pool, fetch_sync )
 
     async def download_html(self, page: RequestPageData) -> str | None:
-        """Загружает HTML по url из пользовательского объекта RequestPageData"""
+        """Loads HTML by url from a custom RequestPageData object"""
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--disable-gpu')

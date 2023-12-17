@@ -4,11 +4,9 @@ from typing import Coroutine
 from logger import logger
 
 from database import Database
-from downloader import Downloader
-from downloader import DynamicDownloader, StaticDownloader
+from downloader import DynamicDownloader, StaticDownloader, Downloader
 from models import RequestPageData
-from parser import HabrParser, FLParser, YouDoParser
-from parser import Parser
+from parser import HabrParser, FLParser, YouDoParser, Parser
 from tg_bot import TGBot
 from search_engine import SearchEngine
 
@@ -99,20 +97,16 @@ class Program:
                 self.new_data_from_update.extend(await self.db.insert_data(item))
             result.clear()
             await asyncio.sleep(self.update_timeout * 60)
-
+            logger.debug(len(self.new_data_from_update))
             users_request_data = await self.db.get_user_data()
 
             notifications = await self.search_engine.create_notifications(
                 self.new_data_from_update,
                 users_request_data)
+            await self.tg_bot.notify(notifications)
 
             logger.debug('результат')
             logger.debug(notifications)
-            logger.debug('список апдейтов')
-            logger.debug(self.new_data_from_update)
-
-
-
 
 
 
@@ -126,7 +120,7 @@ class Program:
 
 if __name__ == "__main__":
     start_time = time.time()
-    program = Program(SCRAPPER_SETTINGS, update_timeout=1)
+    program = Program(SCRAPPER_SETTINGS)
 
     asyncio.run(program.start())
     end_time = time.time()

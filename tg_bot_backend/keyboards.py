@@ -7,7 +7,7 @@ btn_stop_notify = InlineKeyboardButton(text='Прекратить уведомл
 
 
 '''
-control_panel - основная клавиатура при помощи которой присходит всё взаимодействие с ботом
+control_panel - the main keyboard through which all interaction with the bot takes place
 '''
 control_panel_buttons = [[btn_start_notify],
                          [btn_create_key_words_list],

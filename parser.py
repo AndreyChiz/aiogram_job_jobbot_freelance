@@ -34,7 +34,7 @@ class Parser(ABC):
 
     @abstractmethod
     async def parse_data(self, page_html: str | None) -> List[BaseOrderData] | None:
-        """Возвращает спсиок новых заказов"""
+        """Returns a list of new orders"""
         raise NotImplementedError("Метод должен быть переопределен в подклассе")
 
 
