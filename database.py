@@ -49,7 +49,7 @@ class Database:
     async def insert_user_data(self, user_id,
                                user_name=None,
                                user_keywords=[],
-                               user_notify=1):
+                               user_notify=True):
         user_keywords = list(set(user_keywords.split(','))) if user_keywords else []
         if any([user_name, user_keywords]):
             user = UsersOrm(user_id=user_id,
@@ -59,7 +59,7 @@ class Database:
         else:
             user = UsersOrm(user_id=user_id,
                             user_notify=user_notify)
-        logger.debug(user.user_id, user.user_name, user.user_keywords, user.user_notify)
+
         async with self.session_factory() as session:
             await session.merge(user)
             await session.commit()
