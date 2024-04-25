@@ -9,7 +9,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=me
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 100147483648
     volumes:
-      - ./rabbitmq:/var/lib/rabbitmq
+      - ./volumes/rabbitmq:/var/lib/rabbitmq
     ports:
       - 15672:15672
       - 5672:5672
