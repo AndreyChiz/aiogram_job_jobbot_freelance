@@ -1,0 +1,28 @@
+# Используем базовый образ Python с Alpine Linux
+FROM python:3.10-alpine
+
+# Установка зависимостей для сборки
+RUN apk update && \
+    apk add --no-cache curl && \
+    rm -rf /var/cache/apk/*
+
+# Установка Poetry
+RUN curl -# -sSL https://install.python-poetry.org | python -
+
+# Добавляем путь к исполняемому файлу Poetry в PATH
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Устанавливаем переменную окружения для отключения аналитики Poetry
+ENV POETRY_NO_INTERACTION=1
+
+# Копируем файлы зависимостей и устанавливаем их глобально
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --only main --no-interaction --no-ansi
+
+
+# Копируем остальные файлы вашего проекта в контейнер
+COPY . .
+
+# Команда, которая будет запускаться при старте контейнера
+CMD ["python", "bot/main.py"]
