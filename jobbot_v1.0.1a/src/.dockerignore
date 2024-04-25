@@ -1,0 +1,26 @@
+# Игнорируем временные и системные файлы
+.dockerignore
+.dockerignore~
+.git
+.gitignore
+.gitmodules
+.DS_Store
+.svn
+CVS
+
+# Игнорируем файлы сборки и прочие временные файлы
+*.log
+*.swp
+*.tmp
+*.bak
+*.DS_Store
+*.sublime-workspace
+
+# Игнорируем файлы и директории, создаваемые средой разработки
+.vscode
+.idea
+__pycache__
+venv
+.venv
+.env
+node_modules
